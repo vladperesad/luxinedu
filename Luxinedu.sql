@@ -65,8 +65,88 @@ FIELDS TERMINATED BY ','
 ENCLOSED BY '"'
 LINES TERMINATED BY '\n';
 
-SHOW TABLES;
+/* 1. How well a student fits in the group */
+#Create a temporary table 'attendance_num'that has grades 1-5 rather than A-E
+
+DROP TABLE IF EXISTS attendance_num;
+CREATE TEMPORARY TABLE attendance_num
 SELECT
-	*
+	record_id,
+    att_date,
+    stud_id,
+    CASE homework
+    WHEN 1 THEN 5
+    WHEN 0 THEN 0
+    ELSE NULL
+    END AS homework,
+    CASE compr
+    WHEN 'A' THEN 5
+    WHEN 'B' THEN 4
+    WHEN 'C' THEN 3
+    WHEN 'D' THEN 2
+    WHEN 'E' THEN 1
+    ELSE NULL
+    END AS comp,
+    CASE speak
+    WHEN 'A' THEN 5
+    WHEN 'B' THEN 4
+    WHEN 'C' THEN 3
+    WHEN 'D' THEN 2
+    WHEN 'E' THEN 1
+    ELSE NULL
+    END AS speak,
+    CASE behav
+    WHEN 'A' THEN 5
+    WHEN 'B' THEN 4
+    WHEN 'C' THEN 3
+    WHEN 'D' THEN 2
+    WHEN 'E' THEN 1
+    ELSE NULL
+    END AS behav,
+    CASE vocab
+    WHEN 'A' THEN 5
+    WHEN 'B' THEN 4
+    WHEN 'C' THEN 3
+    WHEN 'D' THEN 2
+    WHEN 'E' THEN 1
+    ELSE NULL
+    END AS vocab,
+    CASE readn
+    WHEN 'A' THEN 5
+    WHEN 'B' THEN 4
+    WHEN 'C' THEN 3
+    WHEN 'D' THEN 2
+    WHEN 'E' THEN 1
+    ELSE NULL
+    END AS readn,
+    CASE writ
+    WHEN 'A' THEN 5
+    WHEN 'B' THEN 4
+    WHEN 'C' THEN 3
+    WHEN 'D' THEN 2
+    WHEN 'E' THEN 1
+    ELSE NULL
+    END AS writ
 FROM
-	students;
+	attendance;
+    
+#perform a join so that students names and group names can be viewed
+
+SELECT
+	record_id,
+    att_date,
+    stud_name,
+    class_name,
+    homework,
+    comp,
+    speak,
+    behav,
+    vocab,
+    readn,
+    writ
+FROM
+	students AS std
+    INNER JOIN attendance_num AS att ON std.stud_id = att.stud_id
+    INNER JOIN classes AS cls ON std.class_id = cls.class_id
+ORDER BY
+	record_id;
