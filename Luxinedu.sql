@@ -65,88 +65,188 @@ FIELDS TERMINATED BY ','
 ENCLOSED BY '"'
 LINES TERMINATED BY '\n';
 
+/* ----------------------------------BEGIN------------------------------------------------*/
+
+
 /* 1. How well a student fits in the group */
-#Create a temporary table 'attendance_num'that has grades 1-5 rather than A-E
+# Check how clean the data is by looking at uniqie values in each column
+
+SELECT
+    DISTINCT(homework)
+FROM
+	attendance;
+	
+SELECT
+    DISTINCT(comprehension)
+FROM
+	attendance;
+SELECT
+    DISTINCT(behaviour)
+FROM
+	attendance;
+    #etc
+
+#Create a temporary table 'attendance_num'that has grades 1-5 rather than Great - Poor
 
 DROP TABLE IF EXISTS attendance_num;
 CREATE TEMPORARY TABLE attendance_num
 SELECT
 	record_id,
     att_date,
-    stud_id,
+    student_id,
     CASE homework
     WHEN 1 THEN 5
     WHEN 0 THEN 0
     ELSE NULL
     END AS homework,
-    CASE compr
-    WHEN 'A' THEN 5
-    WHEN 'B' THEN 4
-    WHEN 'C' THEN 3
-    WHEN 'D' THEN 2
-    WHEN 'E' THEN 1
+    CASE comprehension
+    WHEN 'Great' THEN 5
+    WHEN 'Good' THEN 4
+    WHEN 'Satisfactory' THEN 3
+    WHEN 'Poor' THEN 2
+    WHEN 'None' THEN 1
     ELSE NULL
-    END AS comp,
-    CASE speak
-    WHEN 'A' THEN 5
-    WHEN 'B' THEN 4
-    WHEN 'C' THEN 3
-    WHEN 'D' THEN 2
-    WHEN 'E' THEN 1
+    END AS comprehension,
+    CASE speaking
+    WHEN 'Great' THEN 5
+    WHEN 'Misses words' THEN 4
+    WHEN 'Single word' THEN 3
+    WHEN 'Needs help' THEN 2
+    WHEN 'None' THEN 1
     ELSE NULL
-    END AS speak,
-    CASE behav
-    WHEN 'A' THEN 5
-    WHEN 'B' THEN 4
-    WHEN 'C' THEN 3
-    WHEN 'D' THEN 2
-    WHEN 'E' THEN 1
+    END AS speaking,
+    CASE behaviour
+    WHEN 'Very active' THEN 5
+    WHEN 'Tried' THEN 4
+    WHEN 'Satisfactory' THEN 3
+    WHEN 'Poor' THEN 2
+    WHEN 'None' THEN 1
     ELSE NULL
-    END AS behav,
-    CASE vocab
-    WHEN 'A' THEN 5
-    WHEN 'B' THEN 4
-    WHEN 'C' THEN 3
-    WHEN 'D' THEN 2
-    WHEN 'E' THEN 1
+    END AS behaviour,
+    CASE vocabulary
+    WHEN 'Knows all' THEN 5
+    WHEN 'Knows some' THEN 4
+    WHEN 'Knows basic' THEN 3
+    WHEN 'Needs help' THEN 2
+    WHEN 'None' THEN 1
     ELSE NULL
-    END AS vocab,
-    CASE readn
-    WHEN 'A' THEN 5
-    WHEN 'B' THEN 4
-    WHEN 'C' THEN 3
-    WHEN 'D' THEN 2
-    WHEN 'E' THEN 1
+    END AS vocabulary,
+    CASE reading
+    WHEN 'Great' THEN 5
+    WHEN 'Good' THEN 4
+    WHEN 'Satisfactory' THEN 3
+    WHEN 'Poor' THEN 2
+    WHEN 'None' THEN 1
     ELSE NULL
-    END AS readn,
-    CASE writ
-    WHEN 'A' THEN 5
-    WHEN 'B' THEN 4
-    WHEN 'C' THEN 3
-    WHEN 'D' THEN 2
-    WHEN 'E' THEN 1
+    END AS reading,
+    CASE writing
+    WHEN 'Great' THEN 5
+    WHEN 'Good' THEN 4
+    WHEN 'Satisfactory' THEN 3
+    WHEN 'Poor' THEN 2
+    WHEN 'None' THEN 1
     ELSE NULL
-    END AS writ
+    END AS writing
 FROM
 	attendance;
+ 
+ /* Check that the CASE statements worked out and there are only numerical values and nulls */
+SELECT 
+	*
+FROM
+	attendance_num;
     
-#perform a join so that students names and group names can be viewed
+# Check the values in columns homework, speaking etc
 
 SELECT
-	record_id,
-    att_date,
-    stud_name,
-    class_name,
-    homework,
-    comp,
-    speak,
-    behav,
-    vocab,
-    readn,
-    writ
+	group_name,
+	student_name,
+	AVG(homework) AS avg_homework,
+    AVG(comprehension) AS avg_comprehension,
+    AVG(speaking) AS avg_speaking,
+    AVG(behaviour) AS avg_behaviour,
+    AVG(vocabulary) AS avg_vocabulary,
+    AVG(reading) AS avg_reading,
+    AVG(writing) AS avg_writing
 FROM
-	students AS std
-    INNER JOIN attendance_num AS att ON std.stud_id = att.stud_id
-    INNER JOIN classes AS cls ON std.class_id = cls.class_id
-ORDER BY
-	record_id;
+	students AS st 
+    INNER JOIN grups AS gr ON st.group_id = gr.group_id
+    INNER JOIN attendance_num AS att_num ON st.student_id = att_num.student_id
+GROUP BY att_num.student_id;
+
+# Value in homework column for groups that use books ACT3 and below (ACT2 and ACT1) is not assigned, so zero values must be chaged to NULL 
+
+# Create a temporary table that contains book ids as well as students ids 
+
+DROP TABLE IF EXISTS groups_homework;
+CREATE TEMPORARY TABLE groups_homework
+SELECT
+	student_id,
+    book_id
+FROM
+	students AS st 
+    INNER JOIN grups AS gr ON st.group_id = gr.group_id;
+
+UPDATE attendance_num
+	SET homework = NULL
+	WHERE student_id IN (
+    SELECT
+		student_id
+    FROM
+		groups_homework
+	WHERE book_id IN ('ACT3', 'ACT2','ACT1'));
+		
+# check that it worked
+
+SELECT
+	group_name,
+	student_name,
+	AVG(homework) AS avg_homework,
+    AVG(comprehension) AS avg_comprehension,
+    AVG(speaking) AS avg_speaking,
+    AVG(behaviour) AS avg_behaviour,
+    AVG(vocabulary) AS avg_vocabulary,
+    AVG(reading) AS avg_reading,
+    AVG(writing) AS avg_writing
+FROM
+	students AS st 
+    INNER JOIN grups AS gr ON st.group_id = gr.group_id
+    INNER JOIN attendance_num AS att_num ON st.student_id = att_num.student_id
+GROUP BY att_num.student_id;
+    
+# pull up students average performance versus average group performance 
+
+SELECT
+	DISTINCT(att_num.student_id),
+    student_name,
+    grp.group_id,
+    group_name,
+    AVG(homework) OVER (PARTITION BY att_num.student_id) AS avg_ss_homework,
+    AVG(homework) OVER (PARTITION BY grp.group_id) AS avg_grp_homework
+    AVG(comprehension) AS comp,
+    #AVG(comp) OVER (PARTITION BY class_name) cl_avg_comp,
+    AVG (speak) AS speak,
+    #AVG(speak) OVER (PARTITION BY class_name) cl_avg_speak,
+    AVG (behav) AS behav,
+    #AVG(behav) OVER (PARTITION BY class_name) cl_avg_behav,
+    AVG (vocab) AS vocab,
+    #AVG(vocab) OVER (PARTITION BY class_name) cl_avg_vocab,
+    AVG(readn) AS readn,
+    #AVG(readn) OVER (PARTITION BY class_name) cl_avg_readn,
+    AVG(writ) AS writ
+    #AVG(writ) OVER (PARTITION BY class_name) cl_avg_writ */
+FROM
+	students AS st
+    INNER JOIN attendance_num AS att_num ON st.student_id = att_num.student_id
+    INNER JOIN grups AS grp ON st.group_id = grp.group_id;
+
+SELECT
+	gr.group_id,
+    group_name,
+    AVG(homework)
+FROM
+	students AS st
+INNER JOIN grups AS gr ON st.group_id = gr.group_id
+INNER JOIN attendance_num AS att_num ON st.student_id = att_num.student_id
+GROUP BY gr.group_id; 
+
