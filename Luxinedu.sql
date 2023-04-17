@@ -246,7 +246,7 @@ ORDER BY group_id;
 
 /*----------------------------------------------------------------------*/
 
-/* 2.Which book I have the most students on*/ 
+/* 2.Which book I have the most students on (percent)*/ 
 CREATE OR REPLACE VIEW st_books_percent AS
 SELECT
     book_name,
@@ -270,7 +270,7 @@ CREATE OR REPLACE VIEW homework_avg_performance AS
 SELECT
 student_name,
 (AVG(comprehension)+AVG(speaking)+AVG(behaviour)+AVG(vocabulary)+AVG(reading)+AVG(writing))/6 AS avg_performance,
-AVG(homework)
+AVG(homework) AS avg_homework
 FROM
 	students AS st
 INNER JOIN attendance_num AS att_num ON st.student_id = att_num.student_id
@@ -279,18 +279,26 @@ WHERE book_id NOT IN ('ACT3', 'ACT2', 'ACT1','HOT1','HOT2','HOT3','HOTN')
 GROUP BY st.student_id
 ORDER BY st.student_id;
 
-SELECT
-	*
-FROM
-	grups;
-    
-SELECT
-	*
-FROM
-	teaching_materials;
+
     
 /*----------------------------------------------------------------------*/
 
-/* 4. How many students are shared with each TA */
+/* 4. How many students are shared with each TA (percent) */
 
- 
+CREATE OR REPLACE VIEW percent_st_with_ta AS
+SELECT
+	bm_name,
+    count(student_id)/(
+    SELECT
+		count(student_id)
+	FROM
+		students)*100 AS percent
+FROM
+	students AS st 
+	INNER JOIN bilingual_mentors AS bm ON st.bm_id = bm.bm_id
+GROUP BY bm_name;
+
+/*----------------------------------------------------------------------*/
+
+/* 5. Ss attandance rate vs students performance */
+
