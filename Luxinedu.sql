@@ -246,3 +246,51 @@ ORDER BY group_id;
 
 /*----------------------------------------------------------------------*/
 
+/* 2.Which book I have the most students on*/ 
+CREATE OR REPLACE VIEW st_books_percent AS
+SELECT
+    book_name,
+    count(student_id)/(
+    SELECT
+		count(student_id)
+	FROM
+		grups AS gr
+	INNER JOIN students AS st ON gr.group_id = st.group_id)*100 AS percentage		
+FROM
+	grups AS gr 
+    INNER JOIN students AS st ON gr.group_id = st.group_id
+    INNER JOIN teaching_materials AS tm ON gr.book_id = tm.book_id
+    GROUP BY book_name;
+    
+/*----------------------------------------------------------------------*/
+
+/* 3.Does the homework completion correlate with students avg score for HC1 and up */ 
+
+CREATE OR REPLACE VIEW homework_avg_performance AS
+SELECT
+student_name,
+(AVG(comprehension)+AVG(speaking)+AVG(behaviour)+AVG(vocabulary)+AVG(reading)+AVG(writing))/6 AS avg_performance,
+AVG(homework)
+FROM
+	students AS st
+INNER JOIN attendance_num AS att_num ON st.student_id = att_num.student_id
+INNER JOIN grups AS gr ON st.group_id = gr.group_id 
+WHERE book_id NOT IN ('ACT3', 'ACT2', 'ACT1','HOT1','HOT2','HOT3','HOTN')
+GROUP BY st.student_id
+ORDER BY st.student_id;
+
+SELECT
+	*
+FROM
+	grups;
+    
+SELECT
+	*
+FROM
+	teaching_materials;
+    
+/*----------------------------------------------------------------------*/
+
+/* 4. How many students are shared with each TA */
+
+ 
