@@ -297,8 +297,25 @@ FROM
 	students AS st 
 	INNER JOIN bilingual_mentors AS bm ON st.bm_id = bm.bm_id
 GROUP BY bm_name;
-
 /*----------------------------------------------------------------------*/
 
-/* 5. Ss attandance rate vs students performance */
+/*5. Aspect with which students of the each group struggle the most*/
 
+SELECT
+	book_id,
+	AVG(comprehension),
+    AVG(speaking),
+    AVG(behaviour),
+    AVG(vocabulary),
+    AVG(reading),
+    AVG(writing)
+FROM
+	students AS st
+    INNER JOIN attendance_num AS att_num ON st.student_id = att_num.student_id
+    INNER JOIN grups AS gr ON st.group_id = gr.group_id
+GROUP BY book_id;
+
+SELECT
+	*    
+FROM
+	attendance_num AS att_num INNER JOIN students AS st ON att_num.student_id = st.student_id;
