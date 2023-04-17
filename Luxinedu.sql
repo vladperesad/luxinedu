@@ -65,6 +65,8 @@ FIELDS TERMINATED BY ','
 ENCLOSED BY '"'
 LINES TERMINATED BY '\n';
 
+USE i2intedu;
+
 /* ----------------------------------BEGIN------------------------------------------------*/
 
 
@@ -89,7 +91,7 @@ FROM
 #Create a temporary table 'attendance_num'that has grades 1-5 rather than Great - Poor
 
 DROP TABLE IF EXISTS attendance_num;
-CREATE TEMPORARY TABLE attendance_num
+CREATE TABLE attendance_num
 SELECT
 	record_id,
     att_date,
@@ -214,39 +216,33 @@ FROM
     INNER JOIN attendance_num AS att_num ON st.student_id = att_num.student_id
 GROUP BY att_num.student_id;
     
-# pull up students average performance versus average group performance 
+# pull up students average performance versus average group performance into a view
 
+CREATE OR REPLACE VIEW st_avg_vs_gr_avg AS
 SELECT
 	DISTINCT(att_num.student_id),
     student_name,
     grp.group_id,
     group_name,
-    AVG(homework) OVER (PARTITION BY att_num.student_id) AS avg_ss_homework,
-    AVG(homework) OVER (PARTITION BY grp.group_id) AS avg_grp_homework
-    AVG(comprehension) AS comp,
-    #AVG(comp) OVER (PARTITION BY class_name) cl_avg_comp,
-    AVG (speak) AS speak,
-    #AVG(speak) OVER (PARTITION BY class_name) cl_avg_speak,
-    AVG (behav) AS behav,
-    #AVG(behav) OVER (PARTITION BY class_name) cl_avg_behav,
-    AVG (vocab) AS vocab,
-    #AVG(vocab) OVER (PARTITION BY class_name) cl_avg_vocab,
-    AVG(readn) AS readn,
-    #AVG(readn) OVER (PARTITION BY class_name) cl_avg_readn,
-    AVG(writ) AS writ
-    #AVG(writ) OVER (PARTITION BY class_name) cl_avg_writ */
+    AVG(homework) OVER (PARTITION BY att_num.student_id) AS avg_homework,
+    AVG(homework) OVER (PARTITION BY grp.group_id) AS avg_gr_homework,
+    AVG(comprehension) OVER (PARTITION BY att_num.student_id) AS avg_comprehension,
+    AVG(comprehension) OVER (PARTITION BY grp.group_id) AS avg_gr_comprehension,
+    AVG(speaking) OVER (PARTITION BY att_num.student_id) AS avg_speaking,
+    AVG(speaking) OVER (PARTITION BY grp.group_id) AS avg_gr_speaking,
+    AVG (behaviour) OVER (PARTITION BY att_num.student_id) AS avg_behaviour,
+    AVG(behaviour) OVER (PARTITION BY grp.group_id) AS avg_gr_behaviour,
+    AVG(vocabulary) OVER (PARTITION BY att_num.student_id) AS avg_vocabulary,
+    AVG(vocabulary) OVER (PARTITION BY grp.group_id) AS avg_gr_vocabulary,
+    AVG(reading) OVER (PARTITION BY att_num.student_id) AS avg_reading,
+    AVG(reading) OVER (PARTITION BY grp.group_id) AS avg_gr_reading,
+    AVG(writing) OVER (PARTITION BY att_num.student_id) AS avg_writing,
+    AVG(writing) OVER (PARTITION BY grp.group_id) AS avg_gr_writing
 FROM
 	students AS st
     INNER JOIN attendance_num AS att_num ON st.student_id = att_num.student_id
-    INNER JOIN grups AS grp ON st.group_id = grp.group_id;
+    INNER JOIN grups AS grp ON st.group_id = grp.group_id
+ORDER BY group_id;
 
-SELECT
-	gr.group_id,
-    group_name,
-    AVG(homework)
-FROM
-	students AS st
-INNER JOIN grups AS gr ON st.group_id = gr.group_id
-INNER JOIN attendance_num AS att_num ON st.student_id = att_num.student_id
-GROUP BY gr.group_id; 
+/*----------------------------------------------------------------------*/
 
