@@ -301,21 +301,18 @@ GROUP BY bm_name;
 
 /*5. Aspect with which students of the each group struggle the most*/
 
+CREATE OR REPLACE VIEW st_performance_with_book AS
 SELECT
 	book_id,
-	AVG(comprehension),
-    AVG(speaking),
-    AVG(behaviour),
-    AVG(vocabulary),
-    AVG(reading),
-    AVG(writing)
+	AVG(comprehension) AS avg_comprehension,
+    AVG(speaking) AS avg_speaking,
+    AVG(behaviour) AS avg_behaviour,
+    AVG(vocabulary) AS avg_vocabulary,
+    AVG(reading) AS avg_reading,
+    AVG(writing) AS avg_writing
 FROM
 	students AS st
     INNER JOIN attendance_num AS att_num ON st.student_id = att_num.student_id
     INNER JOIN grups AS gr ON st.group_id = gr.group_id
 GROUP BY book_id;
 
-SELECT
-	*    
-FROM
-	attendance_num AS att_num INNER JOIN students AS st ON att_num.student_id = st.student_id;
