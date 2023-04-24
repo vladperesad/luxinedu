@@ -6,24 +6,24 @@ USE luxinedu;
 #Create tables using schema https://drawsql.app/teams/mickey-3220s/diagrams/luxinedu/?ref=embed
 
 CREATE TABLE books (
-book_id VARCHAR(25) PRIMARY KEY,
-book_name VARCHAR(25) NOT NULL
+	book_id VARCHAR(25) PRIMARY KEY,
+	book_name VARCHAR(25) NOT NULL
 );
 
 DESCRIBE books;
 
 CREATE TABLE teach_assistants (
-ta_id INT AUTO_INCREMENT PRIMARY KEY,
-ta_name VARCHAR (25) NOT NULL
+	ta_id INT AUTO_INCREMENT PRIMARY KEY,
+	ta_name VARCHAR (25) NOT NULL
 );
 
 DESCRIBE teach_assistants;
 
 CREATE TABLE classes (
-class_id INT AUTO_INCREMENT PRIMARY KEY,
-class_name VARCHAR (25),
-ta_id INT,
-book_id VARCHAR(25),
+	class_id INT AUTO_INCREMENT PRIMARY KEY,
+	class_name VARCHAR (25),
+	ta_id INT,
+	book_id VARCHAR(25),
 FOREIGN KEY (ta_id)
 	REFERENCES teach_assistants (ta_id) 
     ON UPDATE CASCADE ON DELETE CASCADE,
@@ -36,10 +36,10 @@ DESCRIBE classes;
 
 
 CREATE TABLE students (
-student_id INT AUTO_INCREMENT PRIMARY KEY,
-student_name VARCHAR (25) NOT NULL, 
-class_id INT,
-ta_id INT,
+	student_id INT AUTO_INCREMENT PRIMARY KEY,
+	student_name VARCHAR (25) NOT NULL, 
+	class_id INT,
+	ta_id INT,
 FOREIGN KEY (class_id)
 	REFERENCES classes (class_id)
     ON UPDATE CASCADE ON DELETE CASCADE,
