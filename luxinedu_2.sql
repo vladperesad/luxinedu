@@ -1,5 +1,9 @@
+#Create a database luxinedu.
+
 CREATE DATABASE luxinedu;
 USE luxinedu;
+
+#Create tables using schema https://drawsql.app/teams/mickey-3220s/diagrams/luxinedu/?ref=embed
 
 CREATE TABLE books (
 book_id VARCHAR(25) PRIMARY KEY,
@@ -47,19 +51,19 @@ FOREIGN KEY (ta_id)
 DESCRIBE students;
 
 
-CREATE TABLE attendancento (
-record_id INT AUTO_INCREMENT PRIMARY KEY,
-att_date DATE NOT NULL,
-student_id INT NOT NULL,
-un_lsn DECIMAL (4,2) NOT NULL,
-un_lsn_2 DECIMAL (4,2),
-homework BOOLEAN,
-comprehension ENUM ('E','D','C','B','A') NOT NULL,
-speaking ENUM ('E','D','C','B','A') NOT NULL,
-behaviour ENUM ('E','D','C','B','A') NOT NULL,
-vocabulary ENUM ('E','D','C','B','A'),
-reading ENUM ('E','D','C','B','A'),
-writing ENUM ('E','D','C','B','A'),
+CREATE TABLE attendance (
+	record_id INT AUTO_INCREMENT PRIMARY KEY,
+	att_date DATE NOT NULL,
+	student_id INT NOT NULL,
+	un_lsn DECIMAL (4,2) NOT NULL,
+	un_lsn_2 DECIMAL (4,2),
+	homework BOOLEAN,
+	comprehension ENUM ('E','D','C','B','A') NOT NULL,
+	speaking ENUM ('E','D','C','B','A') NOT NULL,
+	behaviour ENUM ('E','D','C','B','A') NOT NULL,
+	vocabulary ENUM ('E','D','C','B','A'),
+	reading ENUM ('E','D','C','B','A'),
+	writing ENUM ('E','D','C','B','A'),
 FOREIGN KEY (student_id)
 	REFERENCES students (student_id)
     ON UPDATE CASCADE ON DELETE CASCADE
@@ -67,10 +71,7 @@ FOREIGN KEY (student_id)
 
 DESCRIBE attendance;
 
-
-/* ----------------------------------BEGIN------------------------------------------------*/
-
-
+---
 
 #Check min and max dates
 
@@ -81,13 +82,15 @@ FROM
 	attendance;
 
 #Number of students
+
 SELECT
 	count(distinct(student_id)) AS num_of_ss
 FROM
 	attendance;
 
 
-# Check how clean the data is by looking at uniqie values in each column
+# Check the data by making sure the values in each column are what they are supposed to be.
+
 SELECT
     DISTINCT(homework)
 FROM
@@ -97,11 +100,32 @@ SELECT
     DISTINCT(comprehension)
 FROM
 	attendance;
+    
 SELECT
     DISTINCT(behaviour)
 FROM
 	attendance;
-    #etc
+    
+SELECT
+    DISTINCT(speaking)
+FROM
+	attendance;
+    
+ SELECT
+    DISTINCT(vocabulary)
+FROM
+	attendance;
+    
+SELECT
+    DISTINCT(reading)
+FROM
+	attendance;
+    
+SELECT
+    DISTINCT(writing)
+FROM
+	attendance;
+
 
 #Create a table 'attendance_num'that has grades 1-5 rather than Great - Poor
 
@@ -166,7 +190,8 @@ SELECT
 FROM
 	attendance;
  
- /* Check that the CASE statements worked out and there are only numerical values and nulls */
+ # Check that the CASE statements worked out and there are only numerical values and nulls
+ 
 SELECT 
 	*
 FROM
@@ -176,25 +201,28 @@ LIMIT 5;
 # Check the values in columns homework, speaking etc
 
 SELECT
-	group_name,
-	student_name,
-	max(homework) AS max_homework,
-    min(homework) AS min_homework,
-    max(comprehension) AS max_comprehension,
-	min(comprehension) AS min_comprehension, #stopped here
-    AVG(speaking) AS avg_speaking,
-    AVG(behaviour) AS avg_behaviour,
-    AVG(vocabulary) AS avg_vocabulary,
-    AVG(reading) AS avg_reading,
-    AVG(writing) AS avg_writing
+	class_name,
+	max(homework) AS max_hmw,
+    min(homework) AS min_hmw,
+    max(comprehension) AS max_comp,
+	min(comprehension) AS min_comp,
+    max(speaking) AS max_spk,
+    min(speaking) AS min_spk,
+	max(behaviour) AS max_beh,
+    min(behaviour) AS min_beh,
+    max(vocabulary) AS max_voc,
+    min(vocabulary) AS min_voc,
+    max(reading) AS max_read,
+    min(reading) AS min_read,
+    max(writing) AS max_wrt,
+    min(writing) AS min_wrt
 FROM
 	students AS st 
     INNER JOIN classes AS cl ON st.class_id = cl.class_id
     INNER JOIN attendance_num AS att_num ON st.student_id = att_num.student_id
-GROUP BY att_num.student_id
-LIMIT 5;
+GROUP BY class_name;
 
-# Value in homework column for groups that use books ACT3 and below (ACT2 and ACT1) is not assigned, so zero values must be chaged to NULL 
+# Value in homework column for groups that use books MV3 and below (MV2 and MV11) is not assigned, so zero values must be chaged to NULL 
 
 # Create a temporary table that contains book ids as well as students ids 
 
@@ -216,58 +244,55 @@ UPDATE attendance_num
 		classes_homework
 	WHERE book_id IN ('MV3', 'MV2','MV1','HO1','HO2','HO3','HOi'));
 		
-# check that it worked
+# check that the update worked properly
 
 SELECT
 	group_name,
-	student_name,
     book_id,
-	max(homework) AS max_homework,
-    min(homework) AS min_homework,
-    AVG(comprehension) AS avg_comprehension,
-    AVG(speaking) AS avg_speaking,
-    AVG(behaviour) AS avg_behaviour,
-    AVG(vocabulary) AS avg_vocabulary,
-    AVG(reading) AS avg_reading,
-    AVG(writing) AS avg_writing
+	max(homework) AS max_hmw,
+    min(homework) AS min_hmw
 FROM
 	students AS st 
     INNER JOIN grups AS gr ON st.group_id = gr.group_id
     INNER JOIN attendance_num AS att_num ON st.student_id = att_num.student_id
 GROUP BY group_name;
  
- /* 1. How well a student fits in the group */  
+#  question 1.
+# How well a student fits in the group
+ 
 # pull up students average performance versus average group performance into a view
 
-CREATE OR REPLACE VIEW st_avg_vs_gr_avg AS
+CREATE OR REPLACE VIEW st_avg_vs_cl_avg AS
 SELECT
 	DISTINCT(att_num.student_id),
     student_name,
-    grp.group_id,
-    group_name,
-    AVG(homework) OVER (PARTITION BY att_num.student_id) AS avg_homework,
-    AVG(homework) OVER (PARTITION BY grp.group_id) AS avg_gr_homework,
-    AVG(comprehension) OVER (PARTITION BY att_num.student_id) AS avg_comprehension,
-    AVG(comprehension) OVER (PARTITION BY grp.group_id) AS avg_gr_comprehension,
-    AVG(speaking) OVER (PARTITION BY att_num.student_id) AS avg_speaking,
-    AVG(speaking) OVER (PARTITION BY grp.group_id) AS avg_gr_speaking,
-    AVG(behaviour) OVER (PARTITION BY att_num.student_id) AS avg_behaviour,
-    AVG(behaviour) OVER (PARTITION BY grp.group_id) AS avg_gr_behaviour,
-    AVG(vocabulary) OVER (PARTITION BY att_num.student_id) AS avg_vocabulary,
-    AVG(vocabulary) OVER (PARTITION BY grp.group_id) AS avg_gr_vocabulary,
-    AVG(reading) OVER (PARTITION BY att_num.student_id) AS avg_reading,
-    AVG(reading) OVER (PARTITION BY grp.group_id) AS avg_gr_reading,
-    AVG(writing) OVER (PARTITION BY att_num.student_id) AS avg_writing,
-    AVG(writing) OVER (PARTITION BY grp.group_id) AS avg_gr_writing
+    cl.class_id,
+    class_name,
+    AVG(homework) OVER (PARTITION BY att_num.student_id) AS avg_hmw,
+    AVG(homework) OVER (PARTITION BY cl.class_id) AS avg_cl_hmw,
+    AVG(comprehension) OVER (PARTITION BY att_num.student_id) AS avg_comp,
+    AVG(comprehension) OVER (PARTITION BY cl.class_id) AS avg_cl_comp,
+    AVG(speaking) OVER (PARTITION BY att_num.student_id) AS avg_spk,
+    AVG(speaking) OVER (PARTITION BY cl.class_id) AS avg_cl_spk,
+    AVG(behaviour) OVER (PARTITION BY att_num.student_id) AS avg_beh,
+    AVG(behaviour) OVER (PARTITION BY cl.class_id) AS avg_cl_beh,
+    AVG(vocabulary) OVER (PARTITION BY att_num.student_id) AS avg_voc,
+    AVG(vocabulary) OVER (PARTITION BY cl.class_id) AS avg_cl_voc,
+    AVG(reading) OVER (PARTITION BY att_num.student_id) AS avg_read,
+    AVG(reading) OVER (PARTITION BY cl.class_id) AS avg_cl_read,
+    AVG(writing) OVER (PARTITION BY att_num.student_id) AS avg_wrt,
+    AVG(writing) OVER (PARTITION BY cl.class_id) AS avg_cl_wrt
 FROM
 	students AS st
     INNER JOIN attendance_num AS att_num ON st.student_id = att_num.student_id
-    INNER JOIN grups AS grp ON st.group_id = grp.group_id
-ORDER BY group_id;
+    INNER JOIN classes AS cl ON st.class_id = cl.class_id
+ORDER BY class_id;
 
-/*----------------------------------------------------------------------*/
 
-/* 2.Which book I have the most students on (percent)*/ 
+# question 2. 
+# What percentage of students uses each book
+
+
 CREATE OR REPLACE VIEW st_books_percent AS
 SELECT
     book_name,
@@ -275,40 +300,22 @@ SELECT
     SELECT
 		count(student_id)
 	FROM
-		grups AS gr
-	INNER JOIN students AS st ON gr.group_id = st.group_id) AS percentage		
+		classes AS cl
+	INNER JOIN students AS st ON cl.class_id = st.class_id) AS percentage		
 FROM
-	grups AS gr 
-    INNER JOIN students AS st ON gr.group_id = st.group_id
-    INNER JOIN teaching_materials AS tm ON gr.book_id = tm.book_id
+	class AS cl 
+    INNER JOIN students AS st ON cl.class_id = st.group_id
+    INNER JOIN books AS bk ON cl.book_id = bk.book_id
     GROUP BY book_name;
     
-/*----------------------------------------------------------------------*/
-
-/* 3.Does the homework completion correlate with students avg score for HC1 and up */ 
-
-CREATE OR REPLACE VIEW homework_avg_performance AS
-SELECT
-student_name,
-(AVG(comprehension)+AVG(speaking)+AVG(behaviour)+AVG(vocabulary)+AVG(reading)+AVG(writing))/6 AS avg_performance,
-AVG(homework) AS avg_homework
-FROM
-	students AS st
-INNER JOIN attendance_num AS att_num ON st.student_id = att_num.student_id
-INNER JOIN grups AS gr ON st.group_id = gr.group_id 
-WHERE book_id NOT IN ('ACT3', 'ACT2', 'ACT1','HOT1','HOT2','HOT3','HOTN')
-GROUP BY st.student_id
-ORDER BY st.student_id;
 
 
-    
-/*----------------------------------------------------------------------*/
-
-/* 4. How many students are shared with each TA (percent) */
+#question 3.
+# What perentage of students is shared with each teaching assistant
 
 CREATE OR REPLACE VIEW percent_st_with_ta AS
 SELECT
-	bm_name,
+	ta_name,
     count(student_id)/(
     SELECT
 		count(student_id)
@@ -316,11 +323,11 @@ SELECT
 		students) AS percent
 FROM
 	students AS st 
-	INNER JOIN bilingual_mentors AS bm ON st.bm_id = bm.bm_id
-GROUP BY bm_name;
-/*----------------------------------------------------------------------*/
+	INNER JOIN teach_assisstants AS ta ON st.ta_id = ta.ta_id
+GROUP BY ta_name;
 
-/*5. Aspect with which students of the each group struggle the most*/
+# question 4. 
+# Aspect with which students of the each group struggle the most*/
 
 CREATE OR REPLACE VIEW st_performance_with_book AS
 SELECT
@@ -334,14 +341,5 @@ SELECT
 FROM
 	students AS st
     INNER JOIN attendance_num AS att_num ON st.student_id = att_num.student_id
-    INNER JOIN grups AS gr ON st.group_id = gr.group_id
+    INNER JOIN classes AS cl ON st.class_id = cl.class_id
 GROUP BY book_id;
-
-
-USE i2intedu;
-SHOW TABLES;
-SELECT
-	*
-FROM
-	students;
-    
